@@ -1,0 +1,37 @@
+{
+  "name": "datdot-ui-timeline-days",
+  "version": "0.0.0",
+  "description": "datdot ui timeline days",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "budo demo/demo.js:bundle.js --open --live --cors",
+    "build": "browserify demo/demo.js -o bundle.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/playproject-io/datdot-ui-timeline-days.git"
+  },
+  "keywords": [
+    "datdot",
+    "ui",
+    "timeline-days",
+    "list"
+  ],
+  "author": "datdotorg",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/playproject-io/datdot-ui-timeline-days/issues"
+  },
+  "homepage": "https://github.com/playproject-io/datdot-ui-timeline-days#readme",
+  "devDependencies": {
+    "browserify": "^17.0.0",
+    "budo": "^11.6.4"
+  },
+  "dependencies": {
+    "bel": "^6.0.0",
+    "csjs-inject": "^1.0.1",
+    "date-fns": "^2.28.0",
+    "message-maker": "github:datdotorg/message-maker"
+  }
+}
