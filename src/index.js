@@ -1,4 +1,3 @@
-const debug = require('debug')
 const bel = require('bel')
 const message_maker = require('message-maker')
 const csjs = require('csjs-inject')
@@ -41,7 +40,6 @@ function datdot_ui_timeline_days({from = 'Default', data = null, style}, parent_
 // -----------------------------------
 
   const { make } = recipients['parent']
-  const log = debug(myaddress)
   const date = new Date()
   const today = getDate(date)
 
