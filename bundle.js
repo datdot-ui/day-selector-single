@@ -55,7 +55,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   background-color: #F2F2F2;
   height: 100%;
-  background-color: red;
 }
 button:active, button:focus {
   outline: dotted 1px #c9c9c9;
