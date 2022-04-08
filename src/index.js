@@ -7,7 +7,7 @@ var id = 0
 
 module.exports = datdot_ui_timeline_days
 
-function datdot_ui_timeline_days({from = 'Default', data = null, style}, parent_protocol) {
+function datdot_ui_timeline_days({data = null, style}, parent_protocol) {
 
 // -----------------------------------
   const myaddress = `${__filename}-${id++}`
