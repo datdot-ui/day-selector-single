@@ -1,44 +1,27 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-(function (__filename){(function (){
 const timelineDays = require('..')
 const csjs = require('csjs-inject')
 const bel = require('bel')
-const message_maker = require('message-maker')
+const protocol_maker = require('protocol-maker')
 
 var id = 0
 
 function demo () {
 // ------------------------------------
-    const myaddress = `${__filename}-${id++}`
-    const inbox = {}
-    const outbox = {}
-    const recipients = {}
-    const names = {}
-    const message_id = to => (outbox[to] = 1 + (outbox[to]||0))
-
-    function make_protocol (name) {
-        return function protocol (address, notify) {
-            names[address] = recipients[name] = { name, address, notify, make: message_maker(myaddress) }
-            return { notify: listen, address: myaddress }
-        }
-    }
+    const contacts = protocol_maker('demo', listen)
     function listen (msg) {
         console.log('New message', { msg })
         const { head, refs, type, data, meta } = msg // receive msg
-        inbox[head.join('/')] = msg                  // store msg
         const [from] = head
-        // send back ack
-        const { notify: from_notify, make: from_make, address: from_address } = names[from]
-        from_notify(from_make({ to: from_address, type: 'ack', refs: { 'cause': head } }))
     }
 // ------------------------------------
   const data = {
-    count: 3,
-    month:2,
+    count: 9,
+    month:8,
     year: 2022,
-    days: 29
+    days: 31
   }
-  const timelinedays = timelineDays( {data, style: `${css['timeline-days']}` }, make_protocol('calendar-days') )
+  const timelinedays = timelineDays( {data, style: `${css['timeline-days']}` }, contacts.add('calendar-days') )
   const el = bel`<div class=${css.days}>
     <h2 class=${css.title}>Timline days</h2>
     <div class=${css['calendar-timeline-days']}>${timelinedays}</div>
@@ -149,8 +132,7 @@ button:active, button:focus {
 `
 
 document.body.append(demo())
-}).call(this)}).call(this,"/demo/demo.js")
-},{"..":300,"bel":3,"csjs-inject":6,"message-maker":296}],2:[function(require,module,exports){
+},{"..":301,"bel":3,"csjs-inject":6,"protocol-maker":297}],2:[function(require,module,exports){
 var trailingNewlineRegex = /\n[\s]+$/
 var leadingNewlineRegex = /^\n[\s]+/
 var trailingSpaceRegex = /[\s]+$/
@@ -384,7 +366,7 @@ module.exports = hyperx(belCreateElement, {comments: true})
 module.exports.default = module.exports
 module.exports.createElement = belCreateElement
 
-},{"./appendChild":2,"hyperx":298}],4:[function(require,module,exports){
+},{"./appendChild":2,"hyperx":299}],4:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -403,7 +385,7 @@ function csjsInserter() {
 module.exports = csjsInserter;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"csjs":9,"insert-css":299}],5:[function(require,module,exports){
+},{"csjs":9,"insert-css":300}],5:[function(require,module,exports){
 'use strict';
 
 module.exports = require('csjs/get-css');
@@ -21854,6 +21836,139 @@ module.exports = function message_maker (from) {
   }
 }
 },{}],297:[function(require,module,exports){
+// const path = require('path')
+// const filename = path.basename(__filename)
+const message_maker = require('message-maker')
+// const message_id = to => (outbox[to] = 1 + (outbox[to]||0))
+
+module.exports = protocol_maker
+
+const routes = {}
+var id = 0
+
+function protocol_maker (type, listen, initial_contacts = {}) {
+  if (!type || typeof type !== 'string') throw new Error('invalid type')
+  const myaddress = id++
+
+  const inbox = {}
+  const outbox = {}
+
+  const by_name = {}
+  const by_address = {}
+  const contacts = { add, by_name, by_address, cut, on }
+  
+  const keys = Object.keys(initial_contacts)
+  for (var i = 0, len = keys.length; i < len; i++) {
+    const name = keys[i]
+    const wire = initial_contacts[name]
+    // @INFO: perspective of sub instance:
+    const { notify, address } = wire(myaddress, wrap_listen(listen))    
+    const contact = {
+      name,
+      address,
+      // path: `${myaddress}/${name}`,
+      notify: wrap_notify(notify),
+      make: message_maker(myaddress)
+    }
+    by_name[name] = by_address[address] = contact // new Promise(resolve => resolve(contact))
+  }
+  return contacts
+  function on (listener) {
+    // @NOTE: to listen to any "default protocol events" supported by any protocol, e.g. help
+    // maybe also: 'connect', or 'disconnect'
+    throw new Error ('`on` is not yet implemented')
+    return function off () {}
+  }
+  function cut (wire) { throw new Error ('`cut` is not yet implemented')}
+  function add (name) {
+    // @INFO: perspective of instance:
+    if (!name || typeof name !== 'string') throw new Error('invalid name')
+    if (by_name[name]) throw new Error('name already exists')
+    const wait = {}
+    by_name[name] = { name, make: message_maker(myaddress) } // new Promise((resolve, reject) => { wait.resolve = resolve; wait.reject = reject })
+    return function wire (address, notify) {
+      const contact = {
+        // @TODO: add queryable "routes" and allow lookup `by_route[route]`       
+        name, // a nickname dev gives to a component
+        address, // an address app makes for each component
+        // TODO: address will become "name" (like type) compared to nickname
+        // address: something new, based on e.g. filepath or browserified bundle.js:22:42 etc.. to give actual globally unique identifier
+        notify: wrap_notify(notify),
+        make: message_maker(myaddress)
+      }
+      // wait.resolve(contact)
+      by_name[name].address = address
+      by_name[name].notify = wrap_notify(notify)
+      by_address[address] = contact // new Promise(resolve => resolve(contact))
+      return { notify: wrap_listen(listen), address: myaddress }
+    }
+  }
+  function wrap_notify (notify) {
+    return message => {
+      outbox[message.head.join('/')] = message  // store message
+      return notify(message)
+    }
+  }
+  function wrap_listen (listen) {
+    return message => {
+      inbox[message.head.join('/')] = message  // store message
+      return listen(message)
+    }
+  }
+}
+/*
+const name_routes = [
+  "root/",
+  "root/el:demo/",
+  "root/el:demo/cpu:range-slider/",
+  "root/el:demo/cpu:range-slider/%:input-number/",
+  "root/el:demo/ram:range-slider/",
+  "root/el:demo/ram:range-slider/GB:input-number/",
+  "root/el:demo/upload:range-slider/",
+  "root/el:demo/upload:range-slider/MB:input-number/",
+  "root/el:demo/download:range-slider/",
+  "root/el:demo/download:range-slider/MB:input-number/",  
+]
+// --------------------------------------------------
+const name_routes = {
+    root: {
+        "el:demo": {
+            "cpu:range-slider": {
+                "%:input-number": {}
+            },
+            "ram:range-slider": {
+                "GB:input-number": {}
+            },
+            "download:range-slider": {
+                "MB:input-number": {}
+            },
+            "upload:range-slider": {
+                "MB:input-number": {}
+            },
+        },
+    },
+}
+// --------------------------------------------------
+const name_routes = {
+    root: {
+        "el": {
+            "cpu": {
+                "%": {}
+            },
+            "ram": {
+                "GB": {}
+            },
+            "download": {
+                "MB": {}
+            },
+            "upload": {
+                "MB": {}
+            },
+        },
+    },
+}
+*/
+},{"message-maker":296}],298:[function(require,module,exports){
 module.exports = attributeToProperty
 
 var transform = {
@@ -21874,7 +21989,7 @@ function attributeToProperty (h) {
   }
 }
 
-},{}],298:[function(require,module,exports){
+},{}],299:[function(require,module,exports){
 var attrToProp = require('hyperscript-attribute-to-property')
 
 var VAR = 0, TEXT = 1, OPEN = 2, CLOSE = 3, ATTR = 4
@@ -22171,7 +22286,7 @@ var closeRE = RegExp('^(' + [
 ].join('|') + ')(?:[\.#][a-zA-Z0-9\u007F-\uFFFF_:-]+)*$')
 function selfClosing (tag) { return closeRE.test(tag) }
 
-},{"hyperscript-attribute-to-property":297}],299:[function(require,module,exports){
+},{"hyperscript-attribute-to-property":298}],300:[function(require,module,exports){
 var inserted = {};
 
 module.exports = function (css, options) {
@@ -22195,10 +22310,9 @@ module.exports = function (css, options) {
     }
 };
 
-},{}],300:[function(require,module,exports){
-(function (__filename){(function (){
+},{}],301:[function(require,module,exports){
 const bel = require('bel')
-const message_maker = require('message-maker')
+const protocol_maker = require('protocol-maker')
 const csjs = require('csjs-inject')
 const { format, getDate, getMonth, getYear, getDaysInMonth, isToday } = require('date-fns')
 
@@ -22206,39 +22320,20 @@ var id = 0
 
 module.exports = datdot_ui_timeline_days
 
-function datdot_ui_timeline_days({from = 'Default', data = null, style}, parent_protocol) {
+function datdot_ui_timeline_days({data = null, style}, parent_wire) {
 
 // -----------------------------------
-  const myaddress = `${__filename}-${id++}`
-  const inbox = {}
-  const outbox = {}
-  const recipients = {}
-  const names = {}
-  const message_id = to => (outbox[to] = 1 + (outbox[to]||0))
+    const initial_contacts = { 'parent': parent_wire }
+    const contacts = protocol_maker('input-number', listen, initial_contacts)
+    function listen (msg) {
+        const { head, refs, type, data, meta } = msg // receive msg
+        const [from] = head
+        console.log('TIMELINE DAYS', { type, from, name: contact.by_address[from].name, msg, data })
+        // handlers
 
-  const {notify, address} = parent_protocol(myaddress, listen)
-  names[address] = recipients['parent'] = { name: 'parent', notify, address, make: message_maker(myaddress) }
-  notify(recipients['parent'].make({ to: address, type: 'ready', refs: {} }))
-
-  function make_protocol (name) {
-      return function protocol (address, notify) {
-          console.log('PROTOCOL INIT', { name, address })
-          names[address] = recipients[name] = { name, address, notify, make: message_maker(myaddress) }
-          return { notify: listen, address: myaddress }
-      }
-  }
-
-  function listen (msg) {
-      const { head, refs, type, data, meta } = msg // receive msg
-      inbox[head.join('/')] = msg                  // store msg
-      const [from] = head
-      console.log('TIMELINE DAYS', { type, from, name: names[from].name, msg, data })
-      // handlers
-
-  }
+    }
 // -----------------------------------
 
-  const { make } = recipients['parent']
   const date = new Date()
   const today = getDate(date)
 
@@ -22284,7 +22379,8 @@ function datdot_ui_timeline_days({from = 'Default', data = null, style}, parent_
 
     target.classList.add(css['date-selected'])
     target.setAttribute('aria-selected', true)
-    return notify(make({ to: address, type: 'click', data: { body: date, count, month, year, days }}))
+    const $parent = contacts.by_name['parent']
+    return $parent.notify($parent.make({ to: $parent.address, type: 'click', data: { body: date, count, month, year, days }}))
   }
 }
 
@@ -22318,5 +22414,4 @@ const css = csjs`
     background: none; 
 }
 `
-}).call(this)}).call(this,"/src/index.js")
-},{"bel":3,"csjs-inject":6,"date-fns":149,"message-maker":296}]},{},[1]);
+},{"bel":3,"csjs-inject":6,"date-fns":149,"protocol-maker":297}]},{},[1]);

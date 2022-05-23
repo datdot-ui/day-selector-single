@@ -1,42 +1,26 @@
 const timelineDays = require('..')
 const csjs = require('csjs-inject')
 const bel = require('bel')
-const message_maker = require('message-maker')
+const protocol_maker = require('protocol-maker')
 
 var id = 0
 
 function demo () {
 // ------------------------------------
-    const myaddress = `${__filename}-${id++}`
-    const inbox = {}
-    const outbox = {}
-    const recipients = {}
-    const names = {}
-    const message_id = to => (outbox[to] = 1 + (outbox[to]||0))
-
-    function make_protocol (name) {
-        return function protocol (address, notify) {
-            names[address] = recipients[name] = { name, address, notify, make: message_maker(myaddress) }
-            return { notify: listen, address: myaddress }
-        }
-    }
+    const contacts = protocol_maker('demo', listen)
     function listen (msg) {
         console.log('New message', { msg })
         const { head, refs, type, data, meta } = msg // receive msg
-        inbox[head.join('/')] = msg                  // store msg
         const [from] = head
-        // send back ack
-        const { notify: from_notify, make: from_make, address: from_address } = names[from]
-        from_notify(from_make({ to: from_address, type: 'ack', refs: { 'cause': head } }))
     }
 // ------------------------------------
   const data = {
-    count: 3,
-    month:2,
+    count: 9,
+    month:8,
     year: 2022,
-    days: 29
+    days: 31
   }
-  const timelinedays = timelineDays( {data, style: `${css['timeline-days']}` }, make_protocol('calendar-days') )
+  const timelinedays = timelineDays( {data, style: `${css['timeline-days']}` }, contacts.add('calendar-days') )
   const el = bel`<div class=${css.days}>
     <h2 class=${css.title}>Timline days</h2>
     <div class=${css['calendar-timeline-days']}>${timelinedays}</div>

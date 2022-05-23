@@ -1,5 +1,5 @@
 const bel = require('bel')
-const message_maker = require('message-maker')
+const protocol_maker = require('protocol-maker')
 const csjs = require('csjs-inject')
 const { format, getDate, getMonth, getYear, getDaysInMonth, isToday } = require('date-fns')
 
@@ -7,39 +7,20 @@ var id = 0
 
 module.exports = datdot_ui_timeline_days
 
-function datdot_ui_timeline_days({data = null, style}, parent_protocol) {
+function datdot_ui_timeline_days({data = null, style}, parent_wire) {
 
 // -----------------------------------
-  const myaddress = `${__filename}-${id++}`
-  const inbox = {}
-  const outbox = {}
-  const recipients = {}
-  const names = {}
-  const message_id = to => (outbox[to] = 1 + (outbox[to]||0))
+    const initial_contacts = { 'parent': parent_wire }
+    const contacts = protocol_maker('input-number', listen, initial_contacts)
+    function listen (msg) {
+        const { head, refs, type, data, meta } = msg // receive msg
+        const [from] = head
+        console.log('TIMELINE DAYS', { type, from, name: contact.by_address[from].name, msg, data })
+        // handlers
 
-  const {notify, address} = parent_protocol(myaddress, listen)
-  names[address] = recipients['parent'] = { name: 'parent', notify, address, make: message_maker(myaddress) }
-  notify(recipients['parent'].make({ to: address, type: 'ready', refs: {} }))
-
-  function make_protocol (name) {
-      return function protocol (address, notify) {
-          console.log('PROTOCOL INIT', { name, address })
-          names[address] = recipients[name] = { name, address, notify, make: message_maker(myaddress) }
-          return { notify: listen, address: myaddress }
-      }
-  }
-
-  function listen (msg) {
-      const { head, refs, type, data, meta } = msg // receive msg
-      inbox[head.join('/')] = msg                  // store msg
-      const [from] = head
-      console.log('TIMELINE DAYS', { type, from, name: names[from].name, msg, data })
-      // handlers
-
-  }
+    }
 // -----------------------------------
 
-  const { make } = recipients['parent']
   const date = new Date()
   const today = getDate(date)
 
@@ -85,7 +66,8 @@ function datdot_ui_timeline_days({data = null, style}, parent_protocol) {
 
     target.classList.add(css['date-selected'])
     target.setAttribute('aria-selected', true)
-    return notify(make({ to: address, type: 'click', data: { body: date, count, month, year, days }}))
+    const $parent = contacts.by_name['parent']
+    return $parent.notify($parent.make({ to: $parent.address, type: 'click', data: { body: date, count, month, year, days }}))
   }
 }
 
