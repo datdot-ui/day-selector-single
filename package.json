@@ -1,7 +1,7 @@
 {
-  "name": "datdot-ui-timeline-days",
-  "version": "0.0.1-alpha",
-  "description": "datdot ui timeline days",
+  "name": "day-selector-single",
+  "version": "0.0.4-alpha",
+  "description": "datdot ui component",
   "main": "src/index.js",
   "scripts": {
     "start": "budo demo/demo.js:bundle.js --open --live --cors",
@@ -10,20 +10,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/datdot-ui/timeline-days.git"
+    "url": "git+https://github.com/datdot-ui/day-selector-single.git"
   },
   "keywords": [
     "datdot",
     "ui",
-    "timeline-days",
+    "day-selector-single",
     "list"
   ],
   "author": "datdotorg",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/datdot-ui/timeline-days/issues"
+    "url": "https://github.com/datdot-ui/day-selector-single/issues"
   },
-  "homepage": "https://github.com/datdot-ui/timeline-days#readme",
+  "homepage": "https://github.com/datdot-ui/day-selector-single#readme",
   "devDependencies": {
     "browserify": "^17.0.0",
     "budo": "^11.6.4"
@@ -31,6 +31,8 @@
   "dependencies": {
     "bel": "^6.0.0",
     "csjs-inject": "^1.0.1",
+    "datdot-ui-button": "github:datdot-ui/button#v0.0.4-alpha",
+    "datdot-ui-month-selector": "github:datdot-ui/month-selector#v0.0.4-alpha",
     "date-fns": "^2.28.0",
     "protocol-maker": "github:datdotorg/protocol-maker#v0.0.1-alpha"
   }
