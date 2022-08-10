@@ -70,9 +70,9 @@ function calendar_days (opts, parent_wire) {
 function onclick (pos) {
 	const btn = buttons[pos]
 	if (!pos || btn.classList.value.includes('disabled-day') || btn.classList.value.includes('date-selected') ) return
-	clear ()
+	clear()
 	current_state.opts.selected = !current_state.opts.selected
-	$parent.notify($parent.make({ to: $parent.address, type: 'selected', data: { body: [current_state.opts.year, current_state.opts.month+1, current_state.opts.value] } }))
+	$parent.notify($parent.make({ to: $parent.address, type: 'click', data: { year: current_state.opts.year, month: current_state.opts.month+1, day: current_state.opts.value } }))
 	if (current_state.opts.selected) btn.classList.add('date-selected')
 }
 	// helpers
@@ -82,7 +82,8 @@ function onclick (pos) {
 		const len = Object.keys(buttons).length
 		for (var i = 1; i < len + 1; i++) {
 			buttons[i].classList.remove('date-selected')
-		}		
+		}
+		$parent.notify($parent.make({ to: $parent.address, type: 'clear' }))
 	}
 
 	function update_cal(data) {

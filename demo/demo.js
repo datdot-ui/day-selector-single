@@ -17,38 +17,34 @@ function demo () {
     const { head, refs, type, data, meta } = msg // receive msg
     const [from] = head
     const name = contacts.by_address[from].name
-    console.log('demo', { type, from, name, msg, data })
-		if (type === 'click') handle_click(name, data.name)
-    if (type === 'clear') return clearAll()
+		if (type === 'click') handle_click(name, data)
+    if (type === 'clear') {}
 	}
 
   // elements	
-	const current_state = {
-		first: { pos: 1, value: null },
-		second:	{ pos: 7, value: null }
-	}
-	const month_name1 = `cal-month-1`
-	const days_name1 = `cal-days-1`
+	const current_state = { pos: 1, value: null	}
+	const month_name = `month-selector`
+	const days_name = `day-selector`
 
-  const date1 = setMonth(new Date(), current_state.first.pos)
-  current_state.first.days = getDaysInMonth(date1)
-  current_state.first.year = getYear(date1)
+  const date = setMonth(new Date(), current_state.pos)
+  current_state.days = getDaysInMonth(date)
+  current_state.year = getYear(date)
 
-  const cal_month1 = calendarMonth({ pos: current_state.first.pos }, contacts.add(month_name1))
-  let cal_days1 = calendarDays({
-    name: days_name1, 
-    year: current_state.first.year,
-    month: current_state.first.pos, 
-    days: current_state.first.days,
+  const cal_month = calendarMonth({ pos: current_state.pos }, contacts.add(month_name))
+  let cal_days = calendarDays({
+    name: days_name, 
+    year: current_state.year,
+    month: current_state.pos, 
+    days: current_state.days,
     start_cal: true 
-  }, contacts.add(days_name1))
+  }, contacts.add(days_name))
   
 	const weekList= ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
   const container = bel`<div class=${css['calendar-container']}></div>`
 
-	const cal1 = bel`<div class=${css.calendar}>${cal_month1}${makeWeekDays()}${cal_days1}</div>`
-  container.append(cal1)
+	const cal = bel`<div class=${css.calendar}>${cal_month}${makeWeekDays()}${cal_days}</div>`
+  container.append(cal)
 
   const demo = bel`<div class=${css.datepicker}> <div class=${css["calendar-header"]}></div> ${container} </div>`
   demo.onclick = (e) => handle_demo_onclick(e)
@@ -64,43 +60,32 @@ function demo () {
     return el
   }
 
+  function handle_click (name, data) {
+    if (name === month_name) {
+      const target = data.name
+      if (current_state.value) return
+      if (target === 'prev') current_state.pos = current_state.pos - 1
+      else if (target === 'next') current_state.pos = current_state.pos + 1
+      const $cal_month = contacts.by_name[name]
+      const $cal_days = contacts.by_name['day-selector']
+      $cal_month.notify($cal_month.make({ to: $cal_month.address, type: 'update', data : { pos: current_state.pos } }))
+      $cal_days.notify($cal_days.make({ to: $cal_days.address, type: 'update', data: { pos: current_state.pos } }))
+    } 
+    else if (name === days_name) {
+      console.log('Click', { data })
+    }
+  }
+
   function handle_demo_onclick (event) {
     const target = event.target.tagName
     if (target === 'DAY-SELECTOR-SINGLE' || target === 'CALENDAR-MONTH') return
-    clearAll()
+    clear()
   } 
-
-  function handle_click (name, target) {
-    // if (current_state.first.value || current_state.second.value) return clearAll()
-    const $cal_month = contacts.by_name[name]
-    let $cal_days
-    let new_pos
-    if (name === month_name1) {
-      if (current_state.first.value) return
-      $cal_days = contacts.by_name[days_name1]
-      if (target === 'prev') new_pos = current_state.first.pos - 1
-      else if (target === 'next') new_pos = current_state.first.pos + 1
-      current_state.first.pos = new_pos
-    }
-    $cal_month.notify($cal_month.make({ to: $cal_month.address, type: 'update', data : { pos: new_pos } }))
-    $cal_days.notify($cal_days.make({ to: $cal_days.address, type: 'update', data: { pos: new_pos } }))
-  }
   
-  function clearAll () {
-    const keys = get_cal_name()
-    keys.forEach(key => {
-      const name = contacts.by_name[key].name
-      const $name = contacts.by_name[name]
-      $name.notify($name.make({ to: $name.address, type: 'clear' }))
-    })
-    current_state.first.value = null
-    current_state.second.value = null
+  function clear () {
+    const $name = contacts.by_name['day-selector']
+    $name.notify($name.make({ to: $name.address, type: 'clear' }))
   }
-
-	function get_cal_name () {
-		const keys = Object.keys(contacts.by_name)
-		return keys.filter(key => contacts.by_name[key].name.includes('cal-days'))
-	}
 
 }
 
