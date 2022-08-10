@@ -1,18 +1,20 @@
-# datdot-ui-timeline-days
+# datdot-ui-day-selector-single
 DatDot UI component
 
 Opts
 ---
-`{data, style}`
+`{ name = 'day-selector-single', month, days, year, value, theme = default_theme }`
 
 
-Incomming message types
+Incoming message types
 ---
-/
+`click`
+`clear`
+`update`
 
 Outgoing message types
 ---
 
 **parent**
-- `ready`
 - `click`
+- `clear`

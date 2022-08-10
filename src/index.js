@@ -10,9 +10,7 @@ const default_opts = {
 	month: init_date().month,
 	days: init_date().days,
 	year: init_date().year,
-	selected: false,
 	value: null,
-	start_cal: true,
 	theme: get_theme()
 }
 sheet.replaceSync(default_opts.theme)
@@ -28,12 +26,10 @@ function calendar_days (opts, parent_wire) {
 		month = default_opts.month,
 		days = default_opts.days,
 		year = default_opts.year,
-		selected = default_opts.selected,
 		value = default_opts.value,
-		start_cal = default_opts.start_cal,
 		theme = '' } = opts
 
-	const current_state =  { opts: { name, month, days, year, selected, value, start_cal, sheets: [default_opts.theme, theme] } }
+	const current_state =  { opts: { name, month, days, year, value, sheets: [default_opts.theme, theme] } }
   
   // protocol
   const initial_contacts = { 'parent': parent_wire }
@@ -71,13 +67,12 @@ function onclick (pos) {
 	const btn = buttons[pos]
 	if (!pos || btn.classList.value.includes('disabled-day') || btn.classList.value.includes('date-selected') ) return
 	clear()
-	current_state.opts.selected = !current_state.opts.selected
+	current_state.opts.value = pos
+	btn.classList.add('date-selected')
 	$parent.notify($parent.make({ to: $parent.address, type: 'click', data: { year: current_state.opts.year, month: current_state.opts.month+1, day: current_state.opts.value } }))
-	if (current_state.opts.selected) btn.classList.add('date-selected')
 }
 	// helpers
 	function clear () {
-		current_state.opts.selected = false
 		current_state.opts.value = void 0
 		const len = Object.keys(buttons).length
 		for (var i = 1; i < len + 1; i++) {
